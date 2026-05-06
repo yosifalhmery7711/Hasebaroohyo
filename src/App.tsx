@@ -555,7 +555,7 @@ const AISolverTab = ({ onAddHistory }: { onAddHistory: (item: Omit<HistoryItem, 
 
     try {
       // الوصول للمفتاح البرمجي من بيئة النظام
-      const apiKey = process.env.GEMINI_API_KEY;
+      const apiKey = import.meta.env.VITE_API_KEY || (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : '');
 
       if (!apiKey || apiKey === "undefined") {
         setMessages(prev => [...prev, { 
