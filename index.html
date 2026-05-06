@@ -5,7 +5,7 @@
     <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1p79NP1wGo5nAmDpGLV3xHvWbC1DJfZdZ" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>روح - الحاسبة الذكية</title>
-    <link rel="manifest" href="manifest.json" />
+    <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#2563eb" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -70,12 +70,12 @@
     </div>
     <div id="offline-toast">يرجى الاتصال بالإنترنت لمرة واحدة فقط لضبط الإعدادات</div>
     <div id="root"></div>
-    <script type="module" src="src/main.tsx"></script>
+    <script type="module" src="/src/main.tsx"></script>
     <script>
       // Service Worker Registration & Update Logic
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('service-worker.js')
+          navigator.serviceWorker.register('/service-worker.js')
             .then(reg => {
               console.log('SW Registered');
               

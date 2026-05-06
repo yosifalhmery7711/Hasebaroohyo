@@ -896,7 +896,7 @@ export default function App() {
   const addHistoryItem = (item: Omit<HistoryItem, 'id' | 'timestamp'>) => {
     const newItem: HistoryItem = {
       ...item,
-      id: crypto.randomUUID(),
+      id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).substring(2, 11),
       timestamp: Date.now(),
     };
     setHistory(prev => [newItem, ...prev].slice(0, 50)); 
