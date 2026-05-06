@@ -1,8 +1,8 @@
 const CACHE_NAME = 'rouh_v2_cache';
 const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/manifest.json'
+  './',
+  'index.html',
+  'manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
