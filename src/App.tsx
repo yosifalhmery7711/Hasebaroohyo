@@ -893,6 +893,15 @@ export default function App() {
     localStorage.setItem('hissab_rouh_history', JSON.stringify(history));
   }, [history]);
 
+  useEffect(() => {
+    // Remove initial loader
+    const loader = document.getElementById('initial-loader');
+    if (loader) {
+      loader.style.opacity = '0';
+      setTimeout(() => loader.remove(), 500);
+    }
+  }, []);
+
   const addHistoryItem = (item: Omit<HistoryItem, 'id' | 'timestamp'>) => {
     const newItem: HistoryItem = {
       ...item,
