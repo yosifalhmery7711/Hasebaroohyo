@@ -108,7 +108,8 @@ const CalculatorTab = ({ onAddHistory }: { onAddHistory: (item: Omit<HistoryItem
           .replace(/√\(/g, 'Math.sqrt(')
           .replace(/\^/g, '**');
 
-        const res = eval(sanitized);
+        // استبدال eval بـ Function constructor لتجنب تحذيرات التشييد وتحسين الثبات
+        const res = new Function(`return ${sanitized}`)();
         const resultStr = Number.isInteger(res) ? String(res) : res.toFixed(4).replace(/\.?0+$/, "");
         
         onAddHistory({
@@ -554,10 +555,14 @@ const AISolverTab = ({ onAddHistory }: { onAddHistory: (item: Omit<HistoryItem, 
     setIsLoading(true);
 
     try {
-      // الوصول للمفتاح البرمجي من بيئة النظام
-      const apiKey = import.meta.env.VITE_API_KEY || (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : '');
+      // الوصول للمفتاح البرمجي بكافة الطرق الممكنة للمنصات (Vercel, GitHub, Local)
+      const apiKey = 
+        import.meta.env.VITE_API_KEY || 
+        import.meta.env.VITE_GEMINI_API_KEY || 
+        (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : '') ||
+        (typeof process !== 'undefined' ? process.env.VITE_API_KEY : '');
 
-      if (!apiKey || apiKey === "undefined") {
+      if (!apiKey || apiKey === "undefined" || apiKey === "") {
         setMessages(prev => [...prev, { 
           role: 'model', 
           content: "عذراً، لم يتم العثور على مفتاح API الخاص بـ Gemini. يرجى ضبطه في إعدادات المنصة." 
