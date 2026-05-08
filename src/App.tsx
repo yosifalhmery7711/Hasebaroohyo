@@ -25,12 +25,9 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
 import { useDropzone } from 'react-dropzone';
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { cn } from './lib/utils';
+import { getGeminiResponse } from './lib/gemini';
 import { HistoryItem, AIMessage, UnitType, Unit } from './types';
-
-// مفتاح API مباشرة كما طلب المستخدم لضمان العمل الفوري
-const GEMINI_API_KEY = "AIzaSyDzeIn2wYpHfVluj8i87XFmtB0ESK4MJI8";
 
 // --- Constants ---
 const TABS = [
@@ -578,32 +575,8 @@ const AISolverTab = ({ onAddHistory }: { onAddHistory: (item: Omit<HistoryItem, 
         return;
       }
 
-      // الاتصال المباشر بمكتبة Google Generative AI كما طلب المستخدم
-      const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-      const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-flash",
-        systemInstruction: "أنت خبير فوري في الرياضيات والعلوم والبرمجة. حل المسائل بدقة وبسرعة فائقة باللغة العربية. استخدم Markdown للتنسيق الواضح. هام: لا تستخدم علامات الدولار ($) حول الأرقام العادية أو المعادلات الرياضية البسيطة، اكتب الأرقام بشكل طبيعي وواضح إلا إذا كان الحديث عن عملة الدولار بالفعل."
-      });
-
-      const contents: any[] = [];
-      const parts: any[] = [{ text: promptText }];
-
-      // معالجة الصورة إذا وجدت
-      if (currentImage && currentImage.includes(',')) {
-        const [header, data] = currentImage.split(',');
-        const mimeType = header.split(';')[0].split(':')[1] || "image/jpeg";
-        parts.push({
-          inlineData: {
-            mimeType,
-            data
-          }
-        });
-      }
-
-      contents.push({ role: 'user', parts });
-
-      const result = await model.generateContent({ contents });
-      const responseText = result.response.text();
+      // الاتصال المباشر بمكتبة Google Generative AI عبر الخدمة الجديدة
+      const responseText = await getGeminiResponse(promptText, currentImage || undefined);
       
       setMessages(prev => {
         const updated = [...prev];
