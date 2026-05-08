@@ -25,8 +25,12 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
 import { useDropzone } from 'react-dropzone';
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { cn } from './lib/utils';
 import { HistoryItem, AIMessage, UnitType, Unit } from './types';
+
+// مفتاح API مباشرة كما طلب المستخدم لضمان العمل الفوري
+const GEMINI_API_KEY = "AIzaSyDzeIn2wYpHfVluj8i87XFmtB0ESK4MJI8";
 
 // --- Constants ---
 const TABS = [
@@ -574,33 +578,37 @@ const AISolverTab = ({ onAddHistory }: { onAddHistory: (item: Omit<HistoryItem, 
         return;
       }
 
-      const response = await fetch('/api/ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          prompt: promptText,
-          image: currentImage
-        }),
+      // الاتصال المباشر بمكتبة Google Generative AI كما طلب المستخدم
+      const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+      const model = genAI.getGenerativeModel({ 
+        model: "gemini-1.5-flash",
+        systemInstruction: "أنت خبير فوري في الرياضيات والعلوم والبرمجة. حل المسائل بدقة وبسرعة فائقة باللغة العربية. استخدم Markdown للتنسيق الواضح. هام: لا تستخدم علامات الدولار ($) حول الأرقام العادية أو المعادلات الرياضية البسيطة، اكتب الأرقام بشكل طبيعي وواضح إلا إذا كان الحديث عن عملة الدولار بالفعل."
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        let errorMessage = "Failed to get response from server";
-        try {
-          const errorData = JSON.parse(errorText);
-          errorMessage = errorData.error || errorMessage;
-        } catch (e) {
-          errorMessage = errorText || errorMessage;
-        }
-        throw new Error(errorMessage);
+      const contents: any[] = [];
+      const parts: any[] = [{ text: promptText }];
+
+      // معالجة الصورة إذا وجدت
+      if (currentImage && currentImage.includes(',')) {
+        const [header, data] = currentImage.split(',');
+        const mimeType = header.split(';')[0].split(':')[1] || "image/jpeg";
+        parts.push({
+          inlineData: {
+            mimeType,
+            data
+          }
+        });
       }
 
-      const data = await response.json();
+      contents.push({ role: 'user', parts });
+
+      const result = await model.generateContent({ contents });
+      const responseText = result.response.text();
       
       setMessages(prev => {
         const updated = [...prev];
         if (updated.length > 0) {
-          updated[updated.length - 1] = { role: 'model', content: data.text || "لم أتمكن من الحصول على رد." };
+          updated[updated.length - 1] = { role: 'model', content: responseText || "لم أتمكن من الحصول على رد." };
         }
         return updated;
       });
