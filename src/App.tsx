@@ -23,7 +23,6 @@ import {
   Instagram
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { GoogleGenAI } from '@google/genai';
 import ReactMarkdown from 'react-markdown';
 import { useDropzone } from 'react-dropzone';
 import { cn } from './lib/utils';
@@ -555,116 +554,64 @@ const AISolverTab = ({ onAddHistory }: { onAddHistory: (item: Omit<HistoryItem, 
     setIsLoading(true);
 
     try {
-      // الوصول للمفتاح البرمجي بكافة الطرق الممكنة للمنصات (Vercel, GitHub, Local)
-      const apiKey = 
-        import.meta.env.VITE_API_KEY || 
-        import.meta.env.VITE_GEMINI_API_KEY || 
-        (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : '') ||
-        (typeof process !== 'undefined' ? process.env.VITE_API_KEY : '');
-
-      if (!apiKey || apiKey === "undefined" || apiKey === "") {
-        setMessages(prev => [...prev, { 
-          role: 'model', 
-          content: "عذراً، لم يتم العثور على مفتاح API الخاص بـ Gemini. يرجى ضبطه في إعدادات المنصة." 
-        }]);
-        setIsLoading(false);
-        return;
-      }
-
-      // تهيئة المحرك بشكل صحيح باستخدام كائن الإعدادات للمكتبة الحديثة @google/genai
-      const ai = new GoogleGenAI({ apiKey });
-      
       const promptText = currentInput || "حل المسألة الموضحة في الصورة بالتفصيل.";
-      const parts: any[] = [{ text: promptText }];
       
-      if (currentImage && currentImage.includes(',')) {
-        try {
-          const [header, data] = currentImage.split(',');
-          const mimeType = header.split(';')[0].split(':')[1] || "image/jpeg";
-          parts.push({ 
-            inlineData: { 
-              mimeType, 
-              data 
-            } 
-          });
-        } catch (imgErr) {
-          console.error("Image error:", imgErr);
-        }
-      }
-
-      // Add user message placeholder
+      // Add model message placeholder
       setMessages(prev => [
         ...prev, 
         { role: 'model', content: "جاري التحليل..." }
       ]);
 
-      // Check if user is online before sending
       if (!navigator.onLine) {
         setMessages(prev => {
           const updated = [...prev];
           if (updated.length > 0) {
-            updated[updated.length - 1] = { role: 'model', content: "عذراً، محرك الذكاء الاصطناعي يتطلب اتصالاً بالإنترنت للحل. يرجى التأكد من اتصالك والمحاولة مرة أخرى." };
+            updated[updated.length - 1] = { role: 'model', content: "عذراً، محرك الذكاء الاصطناعي يتطلب اتصالاً بالإنترنت للحل." };
           }
           return updated;
         });
         setIsLoading(false);
         return;
       }
-      
-      const result = await ai.models.generateContentStream({
-        model: "gemini-2.0-flash",
-        contents: [{ role: 'user', parts }],
-        config: {
-          systemInstruction: "أنت خبير فوري في الرياضيات والعلوم والبرمجة. حل المسائل بدقة وبسرعة فائقة باللغة العربية. استخدم Markdown للتنسيق الواضح. هام: لا تستخدم علامات الدولار ($) حول الأرقام العادية أو المعادلات الرياضية البسيطة، اكتب الأرقام بشكل طبيعي وواضح إلا إذا كان الحديث عن عملة الدولار بالفعل."
-        }
+
+      const response = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          prompt: promptText,
+          image: currentImage
+        }),
       });
 
-      let cumulativeText = "";
-      
-      for await (const chunk of result) {
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = "Failed to get response from server";
         try {
-          const text = chunk.text;
-          if (text) {
-            cumulativeText += text;
-            setMessages(prev => {
-              const newMessages = [...prev];
-              if (newMessages.length > 0) {
-                newMessages[newMessages.length - 1] = { role: 'model', content: cumulativeText };
-              }
-              return newMessages;
-            });
-          }
-        } catch (chunkErr: any) {
-          console.warn("Chunk error:", chunkErr);
-          if (chunkErr?.message?.includes("SAFETY")) {
-             cumulativeText += "\n\n(تنبيه: تم حجب جزء من الرد لأسباب تتعلق بخصوصية المحتوى وفقاً لمعايير الأمان)";
-             setMessages(prev => {
-                const updated = [...prev];
-                if (updated.length > 0) updated[updated.length-1].content = cumulativeText;
-                return updated;
-             });
-             break;
-          }
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          errorMessage = errorText || errorMessage;
         }
+        throw new Error(errorMessage);
       }
 
-      if (!cumulativeText) {
-        setMessages(prev => {
-          const updated = [...prev];
-          if (updated.length > 0 && updated[updated.length-1].content === "جاري التحليل...") {
-            updated[updated.length-1].content = "لم أتمكن من العثور على حل دقيق، يرجى إعادة المحاولة بصورة أوضح.";
-          }
-          return updated;
-        });
-      }
+      const data = await response.json();
       
+      setMessages(prev => {
+        const updated = [...prev];
+        if (updated.length > 0) {
+          updated[updated.length - 1] = { role: 'model', content: data.text || "لم أتمكن من الحصول على رد." };
+        }
+        return updated;
+      });
+
       onAddHistory({
         type: 'ai',
         title: 'سؤال للذكاء الاصطناعي',
         details: promptText.slice(0, 50) + (promptText.length > 50 ? '...' : ''),
         result: 'تم الاستجابة فورياً'
       });
-      setIsLoading(false);
+      
     } catch (error: any) {
       console.error("Gemini API Error:", error);
       let errorMsg = "عذراً، حدثت مشكلة تقنية في معالجة طلبك. يرجى المحاولة مرة أخرى.";
