@@ -15,6 +15,16 @@ async function startServer() {
 
   app.use(express.json({ limit: '10mb' }));
 
+  // API Route for Gemini AI - Using the common handler for both Vercel & Node
+  app.post("/api/ai", async (req, res) => {
+    try {
+      const handler = (await import("./api/ai.ts")).default;
+      await handler(req, res);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
