@@ -1,23 +1,27 @@
 import { GoogleGenAI } from "@google/genai";
 
+export const runtime = 'edge';
+
 export default async function handler(req: any, res: any) {
   // تفعيل CORS لمحاكاة سلوك Express إذا لزم الأمر
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return new Response(null, { status: 200 });
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { 
+      status: 405, 
+      headers: { 'Content-Type': 'application/json' } 
+    });
   }
 
   try {
-    const { prompt, image } = req.body;
+    const { prompt, image } = await req.json();
     
-    // الحصول على المفتاح من كافة المصادر الممكنة في Vercel
-    let apiKey = process.env.GEMINI_API_KEY || 
-                 process.env.VITE_API_KEY || 
-                 process.env.VITE_GEMINI_API_KEY;
+    // الأولوية القصوى للمفتاح الذي يبدأ بـ VITE_ كما في إعداداتك
+    let apiKey = process.env.VITE_GEMINI_API_KEY || 
+                 process.env.GEMINI_API_KEY || 
+                 process.env.VITE_API_KEY;
 
     if (typeof apiKey === "string") {
       apiKey = apiKey.trim();
@@ -27,7 +31,12 @@ export default async function handler(req: any, res: any) {
     }
 
     if (!apiKey) {
-      return res.status(500).json({ error: "مفتاح API غير متوفر في إعدادات Vercel. يرجى إضافته في Environment Variables باسم GEMINI_API_KEY" });
+      return new Response(JSON.stringify({ 
+        error: "مفتاح API غير متوفر. يرجى إضافته في Environment Variables باسم VITE_GEMINI_API_KEY" 
+      }), { 
+        status: 500, 
+        headers: { 'Content-Type': 'application/json' } 
+      });
     }
 
     const ai = new GoogleGenAI({ apiKey });
@@ -44,7 +53,6 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    // استخدام نموذج gemini-1.5-flash الموصى به لثباته وتوافره الواسع
     const response = await ai.models.generateContent({
       model: "gemini-1.5-flash",
       contents: { parts },
@@ -57,9 +65,16 @@ export default async function handler(req: any, res: any) {
       throw new Error("Empty response from Gemini API");
     }
 
-    res.status(200).json({ text: response.text });
+    return new Response(JSON.stringify({ text: response.text }), { 
+      status: 200, 
+      headers: { 'Content-Type': 'application/json' } 
+    });
   } catch (error: any) {
-    console.error("Vercel AI Handler Error:", error);
-    res.status(500).json({ error: error.message || "Internal Server Error" });
+    console.error("Vercel Edge Handler Error:", error);
+    return new Response(JSON.stringify({ error: error.message || "Internal Server Error" }), { 
+      status: 500, 
+      headers: { 'Content-Type': 'application/json' } 
+    });
   }
 }
+

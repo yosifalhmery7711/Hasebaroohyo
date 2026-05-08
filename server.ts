@@ -18,7 +18,22 @@ async function startServer() {
   app.use(express.json({ limit: '10mb' }));
 
   // API Route for Gemini AI - Using the same handler as Vercel
-  app.post("/api/ai", (req, res) => aiHandler(req, res));
+  app.post("/api/ai", async (req, res) => {
+    try {
+      // تحويل طلب Express إلى طلب Standard Request ليتناسب مع Edge Handler
+      const standardReq = {
+        method: req.method,
+        json: async () => req.body,
+        headers: new Headers(req.headers as any)
+      };
+      
+      const response = await aiHandler(standardReq as any, null);
+      const data = await response.json();
+      res.status(response.status).json(data);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
