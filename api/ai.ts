@@ -70,5 +70,6 @@ export default async function handler(req: Request) {
       headers: { 'Content-Type': 'application/json' } 
     });
   }
-        }
+}
+
 
