@@ -7,6 +7,7 @@
     "dev": "tsx server.ts",
     "build": "vite build",
     "preview": "vite preview",
+    "sync-ref": "2026-05-08-1959",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit"
   },

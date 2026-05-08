@@ -2,6 +2,7 @@
 const API_KEY = "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"; 
 
 export const getGeminiResponse = async (userPrompt: string, imageBase64?: string) => {
+// Last Sync: 2026-05-08 19:59
   try {
     const messages = [
       {

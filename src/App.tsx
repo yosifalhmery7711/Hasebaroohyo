@@ -754,6 +754,7 @@ const AISolverTab = ({ onAddHistory }: { onAddHistory: (item: Omit<HistoryItem, 
 
 // --- Main App Component ---
 export default function App() {
+  // UI Sync: 2026-05-08 19:59
   const [activeTab, setActiveTab] = useState(() => localStorage.getItem('rouh_active_tab') || 'calc');
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isLanding, setIsLanding] = useState(() => {
