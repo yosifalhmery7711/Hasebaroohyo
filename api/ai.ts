@@ -1,9 +1,11 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export const runtime = 'edge';
 
-export default async function handler(req: any, res: any) {
-  // تفعيل CORS لمحاكاة سلوك Express إذا لزم الأمر
+// مفتاح API مباشرة كما طلب المستخدم لضمان العمل الفوري
+const API_KEY = "AIzaSyDzeIn2wYpHfVluj8i87XFmtB0ESK4MJI8";
+
+export default async function handler(req: Request) {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 200 });
   }
@@ -18,28 +20,20 @@ export default async function handler(req: any, res: any) {
   try {
     const { prompt, image } = await req.json();
     
-    // الأولوية القصوى للمفتاح الذي يبدأ بـ VITE_ كما في إعداداتك
-    let apiKey = process.env.VITE_GEMINI_API_KEY || 
-                 process.env.GEMINI_API_KEY || 
-                 process.env.VITE_API_KEY;
-
-    if (typeof apiKey === "string") {
-      apiKey = apiKey.trim();
-      if (apiKey === "undefined" || apiKey === "null" || apiKey === "" || apiKey.includes("INSERT_YOUR_KEY")) {
-        apiKey = undefined;
-      }
-    }
-
-    if (!apiKey) {
-      return new Response(JSON.stringify({ 
-        error: "مفتاح API غير متوفر. يرجى إضافته في Environment Variables باسم VITE_GEMINI_API_KEY" 
-      }), { 
+    if (!API_KEY || API_KEY.includes("YOUR_API_KEY")) {
+      return new Response(JSON.stringify({ error: "API Key is missing or invalid in code." }), { 
         status: 500, 
         headers: { 'Content-Type': 'application/json' } 
       });
     }
 
-    const ai = new GoogleGenAI({ apiKey });
+    const genAI = new GoogleGenerativeAI(API_KEY);
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash",
+      systemInstruction: "أنت خبير فوري في الرياضيات والعلوم والبرمجة. حل المسائل بدقة وبسرعة فائقة باللغة العربية. استخدم Markdown للتنسيق الواضح. هام: لا تستخدم علامات الدولار ($) حول الأرقام العادية أو المعادلات الرياضية البسيطة، اكتب الأرقام بشكل طبيعي وواضح إلا إذا كان الحديث عن عملة الدولار بالفعل."
+    });
+
+    const contents: any[] = [];
     const parts: any[] = [{ text: prompt || "حل المسألة الموضحة في الصورة بالتفصيل." }];
 
     if (image && image.includes(',')) {
@@ -53,28 +47,37 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
-      contents: { parts },
-      config: {
-        systemInstruction: "أنت خبير فوري في الرياضيات والعلوم والبرمجة. حل المسائل بدقة وبسرعة فائقة باللغة العربية. استخدم Markdown للتنسيق الواضح. هام: لا تستخدم علامات الدولار ($) حول الأرقام العادية أو المعادلات الرياضية البسيطة، اكتب الأرقام بشكل طبيعي وواضح إلا إذا كان الحديث عن عملة الدولار بالفعل."
-      }
+    contents.push({ role: 'user', parts });
+
+    const result = await model.generateContent({
+      contents
     });
 
-    if (!response || !response.text) {
+    const responseText = result.response.text();
+
+    if (!responseText) {
       throw new Error("Empty response from Gemini API");
     }
 
-    return new Response(JSON.stringify({ text: response.text }), { 
+    return new Response(JSON.stringify({ text: responseText }), { 
       status: 200, 
       headers: { 'Content-Type': 'application/json' } 
     });
   } catch (error: any) {
-    console.error("Vercel Edge Handler Error:", error);
-    return new Response(JSON.stringify({ error: error.message || "Internal Server Error" }), { 
+    console.error("Gemini Direct Handler Error:", error);
+    let errorMessage = error.message || "Internal Server Error";
+    
+    if (errorMessage.includes("API key not valid")) {
+      errorMessage = "مفتاح API غير صالح. يرجى التأكد من المفتاح المستخدم.";
+    } else if (errorMessage.includes("404")) {
+      errorMessage = "خطأ 404: الموديل غير موجود أو غير مدعوم في منطقتك.";
+    }
+
+    return new Response(JSON.stringify({ error: errorMessage }), { 
       status: 500, 
       headers: { 'Content-Type': 'application/json' } 
     });
   }
 }
+
 
