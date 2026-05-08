@@ -1,10 +1,11 @@
 /// <reference types="vite/client" />
-const API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
 
 export const getGeminiResponse = async (userPrompt: string, imageBase64?: string) => {
   try {
-    if (!API_KEY) {
-      throw new Error("OpenRouter API Key is missing. Please set VITE_OPENROUTER_API_KEY in your environment.");
+    const API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
+    
+    if (!API_KEY || API_KEY.includes("xxxxxxxx")) {
+      throw new Error("OpenRouter API Key is missing or invalid. Please set a valid VITE_OPENROUTER_API_KEY in the Settings menu (Environment Variables).");
     }
 
     const messages = [
@@ -21,12 +22,14 @@ export const getGeminiResponse = async (userPrompt: string, imageBase64?: string
       }
     ];
 
+    const referer = typeof window !== "undefined" ? window.location.origin : "https://hasebaroohyo.vercel.app/";
+
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${API_KEY}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://hasebaroohyo.vercel.app/",
+        "HTTP-Referer": referer,
         "X-Title": "Hisab Rouh",
       },
       body: JSON.stringify({
@@ -37,13 +40,15 @@ export const getGeminiResponse = async (userPrompt: string, imageBase64?: string
 
     const data = await response.json();
     
-    if (data.error) {
-      console.error("OpenRouter Error Details:", data.error);
-      throw new Error(data.error.message || "OpenRouter API Error");
+    if (!response.ok) {
+      console.error("OpenRouter Response Error:", data);
+      const errorMsg = data.error?.message || `API Error: ${response.status} ${response.statusText}`;
+      throw new Error(errorMsg);
     }
 
     if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-      throw new Error("Invalid response structure from API");
+      console.error("OpenRouter Unexpected Response:", data);
+      throw new Error("Invalid response structure from OpenRouter API");
     }
 
     return data.choices[0].message.content;
