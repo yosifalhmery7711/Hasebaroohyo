@@ -1,8 +1,8 @@
 {
-  "id": "/",
+  "id": "rouh.app",
   "name": "روح",
   "short_name": "روح",
-  "description": "تطبيق الحسابات الذكي، المحولات، والمنقذ البرمجي المدعوم بالذكاء الاصطناعي",
+  "description": "روح - الحاسبة الذكية والمنقذ البرمجي",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0c0d0f",
