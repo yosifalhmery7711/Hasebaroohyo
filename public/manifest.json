@@ -1,6 +1,6 @@
 {
-  "id": "rouh.app",
-  "name": "روح",
+  "id": "app.rouh.standalone",
+  "name": "حاسبة روح الذكية",
   "short_name": "روح",
   "description": "روح - الحاسبة الذكية والمنقذ البرمجي",
   "start_url": "/",
@@ -12,12 +12,6 @@
   "lang": "ar",
   "dir": "rtl",
   "icons": [
-    {
-      "src": "https://lh3.googleusercontent.com/d/1p79NP1wGo5nAmDpGLV3xHvWbC1DJfZdZ",
-      "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "any"
-    },
     {
       "src": "https://lh3.googleusercontent.com/d/1p79NP1wGo5nAmDpGLV3xHvWbC1DJfZdZ",
       "sizes": "192x192",
@@ -33,24 +27,9 @@
   ],
   "shortcuts": [
     {
-      "name": "الحاسبة",
-      "url": "/?tab=calc",
-      "icons": [{ "src": "https://lh3.googleusercontent.com/d/1p79NP1wGo5nAmDpGLV3xHvWbC1DJfZdZ", "sizes": "192x192" }]
-    },
-    {
       "name": "المنقذ الذكي",
       "url": "/?tab=ai",
       "icons": [{ "src": "https://lh3.googleusercontent.com/d/1p79NP1wGo5nAmDpGLV3xHvWbC1DJfZdZ", "sizes": "192x192" }]
-    }
-  ],
-  "categories": ["education", "productivity", "utilities"],
-  "screenshots": [
-    {
-      "src": "https://lh3.googleusercontent.com/d/1p79NP1wGo5nAmDpGLV3xHvWbC1DJfZdZ",
-      "sizes": "1080x1920",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "واجهة التطبيق الرئيسية"
     }
   ]
 }
