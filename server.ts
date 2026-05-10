@@ -15,6 +15,11 @@ async function startServer() {
 
   app.use(express.json({ limit: '10mb' }));
 
+  // Health check
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok", env: process.env.NODE_ENV });
+  });
+
   // API route for AI response
   app.post("/api/ai", async (req, res) => {
     try {
