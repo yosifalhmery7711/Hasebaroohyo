@@ -2,13 +2,6 @@
 
 export const getGeminiResponse = async (userPrompt: string, imageBase64?: string) => {
   try {
-    const rawKey = import.meta.env.VITE_OPENROUTER_API_KEY;
-    const API_KEY = rawKey?.trim();
-    
-    if (!API_KEY || API_KEY.includes("xxxxxxxx") || API_KEY === "") {
-      throw new Error("OpenRouter API Key is missing or invalid. Please set a valid VITE_OPENROUTER_API_KEY in the Settings menu (Environment Variables).");
-    }
-
     const messages = [
       {
         role: "system",
@@ -23,15 +16,10 @@ export const getGeminiResponse = async (userPrompt: string, imageBase64?: string
       }
     ];
 
-    const referer = typeof window !== "undefined" ? window.location.origin : "https://hasebaroohyo.vercel.app/";
-
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const response = await fetch("/api/ai", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${API_KEY}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": referer,
-        "X-Title": "Hisab Rouh",
       },
       body: JSON.stringify({
         model: "google/gemini-2.0-flash-001",
@@ -42,21 +30,23 @@ export const getGeminiResponse = async (userPrompt: string, imageBase64?: string
     const data = await response.json();
     
     if (!response.ok) {
-      console.error("OpenRouter Response Error:", data);
+      console.error("AI API Error:", data);
       let errorMsg = data.error?.message || `API Error: ${response.status} ${response.statusText}`;
       
       if (errorMsg.toLowerCase().includes("user not found")) {
         errorMsg = "خطأ من OpenRouter: 'User not found'. هذا يعني عادةً أن مفتاح API غير صالح أو أن الحساب في OpenRouter غير مربوط بشكل صحيح. يرجى التأكد من نسخ المفتاح بشكل صحيح.";
       } else if (errorMsg.toLowerCase().includes("insufficient balance") || errorMsg.toLowerCase().includes("credit") || errorMsg.toLowerCase().includes("balance")) {
         errorMsg = "خطأ من OpenRouter: الرصيد غير كافٍ. يرجى شحن رصيدك في OpenRouter للمتابعة.";
+      } else if (errorMsg.toLowerCase().includes("no endpoints found")) {
+        errorMsg = "خطأ: لم يتم العثور على مزود خدمة للموديل المختار. يرجى المحاولة مرة أخرى لاحقاً أو التأكد من رصيد مفتاح OpenRouter.";
       }
       
       throw new Error(errorMsg);
     }
 
     if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-      console.error("OpenRouter Unexpected Response:", data);
-      throw new Error("Invalid response structure from OpenRouter API");
+      console.error("AI Unexpected Response:", data);
+      throw new Error("Invalid response structure from AI API");
     }
 
     return data.choices[0].message.content;
