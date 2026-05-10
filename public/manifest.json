@@ -2,12 +2,12 @@
   "name": "حساب روح - الحاسبة الذكية",
   "short_name": "روح",
   "description": "تطبيق الحسابات الذكي، المحولات، والمنقذ البرمجي المدعوم بالذكاء الاصطناعي",
-  "start_url": "./",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#0c0d0f",
-  "theme_color": "#2563eb",
+  "theme_color": "#0c0d0f",
   "orientation": "portrait",
-  "scope": "./",
+  "scope": "/",
   "lang": "ar",
   "dir": "rtl",
   "icons": [
@@ -24,12 +24,25 @@
       "purpose": "any maskable"
     }
   ],
+  "shortcuts": [
+    {
+      "name": "الحاسبة",
+      "url": "/?tab=calc",
+      "icons": [{ "src": "https://lh3.googleusercontent.com/d/1p79NP1wGo5nAmDpGLV3xHvWbC1DJfZdZ", "sizes": "192x192" }]
+    },
+    {
+      "name": "المنقذ الذكي",
+      "url": "/?tab=ai",
+      "icons": [{ "src": "https://lh3.googleusercontent.com/d/1p79NP1wGo5nAmDpGLV3xHvWbC1DJfZdZ", "sizes": "192x192" }]
+    }
+  ],
   "categories": ["education", "productivity", "utilities"],
   "screenshots": [
     {
       "src": "https://lh3.googleusercontent.com/d/1p79NP1wGo5nAmDpGLV3xHvWbC1DJfZdZ",
       "sizes": "1080x1920",
       "type": "image/png",
+      "form_factor": "narrow",
       "label": "واجهة التطبيق الرئيسية"
     }
   ]

@@ -20,7 +20,12 @@ import {
   ChevronRight,
   Info,
   Camera,
-  Instagram
+  Instagram,
+  Download,
+  Share2,
+  CheckCircle2,
+  AlertCircle,
+  Bell
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
@@ -65,6 +70,163 @@ const DISTANCE_UNITS: Unit[] = [
 ];
 
 // --- Sub-components ---
+
+// 0. Custom Notification UI (Toast)
+interface ToastProps {
+  message: string;
+  type: 'success' | 'error' | 'info';
+  onClose: () => void;
+}
+
+const Toast = ({ message, type, onClose }: ToastProps) => {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 4000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  const icons = {
+    success: <CheckCircle2 size={18} className="text-emerald-400" />,
+    error: <AlertCircle size={18} className="text-red-400" />,
+    info: <Bell size={18} className="text-blue-400" />
+  };
+
+  const bgColors = {
+    success: "bg-emerald-500/10 border-emerald-500/20",
+    error: "bg-red-500/10 border-red-500/20",
+    info: "bg-blue-500/10 border-blue-500/20"
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9, y: -20 }}
+      className={cn(
+        "fixed bottom-24 left-4 right-4 sm:left-auto sm:right-6 sm:w-80 p-4 rounded-2xl border shadow-2xl z-[100] backdrop-blur-xl flex items-center gap-3",
+        bgColors[type]
+      )}
+    >
+      {icons[type]}
+      <p className="text-xs font-bold text-gray-200 flex-1">{message}</p>
+      <button onClick={onClose} className="text-gray-500 hover:text-white">
+        <X size={14} />
+      </button>
+    </motion.div>
+  );
+};
+
+// 0.1 Permission Modal UI
+interface PermissionModalProps {
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+const PermissionModal = ({ onConfirm, onCancel }: PermissionModalProps) => {
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-sm p-6"
+      onClick={onCancel}
+    >
+      <motion.div 
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.9, y: 20 }}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-[#121417] border border-gray-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl"
+      >
+        <div className="w-16 h-16 bg-blue-600/20 rounded-2xl flex items-center justify-center mb-4 mx-auto">
+          <Camera size={32} className="text-blue-500" />
+        </div>
+        <h3 className="text-lg font-black text-center text-white mb-2 italic">إذن استخدام الكاميرا</h3>
+        <p className="text-xs text-gray-400 text-center mb-6 leading-relaxed">
+          نحتاج للوصول إلى الكاميرا للسماح لك بالتقاط صور للمسائل مباشرة ليقوم "روح" بحلها لك فوراً.
+        </p>
+        <div className="flex flex-col gap-2">
+          <button 
+            type="button"
+            onClick={onConfirm}
+            className="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold text-white transition-all active:scale-95"
+          >
+            السماح الآن
+          </button>
+          <button 
+            type="button"
+            onClick={onCancel}
+            className="w-full bg-gray-800 hover:bg-gray-700 py-3 rounded-xl font-bold text-gray-400 transition-all active:scale-95"
+          >
+            ليس الآن
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// 0.2 Confirmation Modal UI
+interface ConfirmationModalProps {
+  title: string;
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  variant?: 'danger' | 'info';
+}
+
+const ConfirmationModal = ({ 
+  title, 
+  message, 
+  onConfirm, 
+  onCancel, 
+  confirmLabel = 'تأكيد', 
+  cancelLabel = 'إلغاء',
+  variant = 'info' 
+}: ConfirmationModalProps) => {
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-sm p-6"
+      onClick={onCancel}
+    >
+      <motion.div 
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.9, y: 20 }}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-[#121417] border border-gray-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl"
+      >
+        <h3 className="text-lg font-black text-center text-white mb-2 italic">{title}</h3>
+        <p className="text-xs text-gray-400 text-center mb-6 leading-relaxed">
+          {message}
+        </p>
+        <div className="flex gap-3">
+          <button 
+            type="button"
+            onClick={onConfirm}
+            className={cn(
+              "flex-1 py-3 rounded-xl font-bold text-white transition-all active:scale-95",
+              variant === 'danger' ? "bg-red-600 hover:bg-red-500" : "bg-blue-600 hover:bg-blue-500"
+            )}
+          >
+            {confirmLabel}
+          </button>
+          <button 
+            type="button"
+            onClick={onCancel}
+            className="flex-1 bg-gray-800 hover:bg-gray-700 py-3 rounded-xl font-bold text-gray-400 transition-all active:scale-95"
+          >
+            {cancelLabel}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
 
 // 1. Calculator Component
 const CalculatorTab = ({ onAddHistory }: { onAddHistory: (item: Omit<HistoryItem, 'id' | 'timestamp'>) => void }) => {
@@ -456,7 +618,15 @@ const HealthTab = ({ onAddHistory }: { onAddHistory: (item: Omit<HistoryItem, 'i
 };
 
 // 4. AI Solver Component
-const AISolverTab = ({ onAddHistory }: { onAddHistory: (item: Omit<HistoryItem, 'id' | 'timestamp'>) => void }) => {
+const AISolverTab = ({ 
+  onAddHistory, 
+  showToast,
+  onPermissionRequest 
+}: { 
+  onAddHistory: (item: Omit<HistoryItem, 'id' | 'timestamp'>) => void;
+  showToast: (msg: string, type: 'success' | 'error' | 'info') => void;
+  onPermissionRequest: () => Promise<boolean>;
+}) => {
   const [isPersistent, setIsPersistent] = useState(() => localStorage.getItem('rouh_ai_persistent') === 'true');
   const [messages, setMessages] = useState<AIMessage[]>(() => {
     if (localStorage.getItem('rouh_ai_persistent') === 'true') {
@@ -494,18 +664,14 @@ const AISolverTab = ({ onAddHistory }: { onAddHistory: (item: Omit<HistoryItem, 
   const onDrop = async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (file) {
-      // محاولة طلب الإذن عند النقر/الاختيار كما طلب المستخدم
-      try {
-        // نكتفي فقط بالتحميل العادي دون طلب إذن مسبق تجنباً لمشاكل المتصفحات في الإطارات (iframes)
-      } catch (err) {
-        console.warn("Camera check skipped:", err);
-      }
+      // التحقق من الإذن قبل المعالجة
+      const hasPermission = await onPermissionRequest();
+      if (!hasPermission) return;
 
       const reader = new FileReader();
       reader.onload = () => {
         const base64 = reader.result as string;
         setAttachedImage(base64);
-        // عرض الصورة مؤقتاً في الدردشة والبدء بالحل تلقائياً لتجربة أسرع
         handleSend(undefined, base64);
       };
       reader.readAsDataURL(file);
@@ -513,15 +679,10 @@ const AISolverTab = ({ onAddHistory }: { onAddHistory: (item: Omit<HistoryItem, 
   };
 
   const onCameraClick = async (e: React.MouseEvent) => {
-    // We try to request camera permission just before useDropzone opens the file dialog
-    // This satisfies the user's request to have permission when clicking the button
-    try {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        stream.getTracks().forEach(track => track.stop()); // Stop immediately
-      }
-    } catch (err) {
-      console.warn("Camera permission error or denied:", err);
+    // Satisfy user request to have custom UI before permission
+    const hasPermission = await onPermissionRequest();
+    if (!hasPermission) {
+      e.stopPropagation(); // Stop if user rejected the custom modal
     }
   };
 
@@ -703,7 +864,7 @@ const AISolverTab = ({ onAddHistory }: { onAddHistory: (item: Omit<HistoryItem, 
           </label>
           {messages.length > 0 && (
             <button 
-              onClick={() => { if(confirm('حذف المحادثة الحالية؟')) setMessages([]) }}
+              onClick={() => { setMessages([]) }}
               className="text-[10px] text-gray-600 hover:text-red-400 font-bold flex items-center gap-1 transition-colors"
             >
               <Trash2 size={12} /> مسح المحادثة
@@ -763,6 +924,138 @@ export default function App() {
   const [imageReady, setImageReady] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
+  // Confirmation Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'info';
+  } | null>(null);
+
+  // PWA Logic
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBtn, setShowInstallBtn] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
+
+  // Toast System
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const showToast = (message: string, type: 'success' | 'error' | 'info') => {
+    setToast({ message, type });
+  };
+
+  // Permission Modal
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const [permissionResolve, setPermissionResolve] = useState<((val: boolean) => void) | null>(null);
+
+  const requestCameraPermission = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      // Check if already granted or if we can just trigger it
+      if (typeof navigator !== 'undefined' && 'permissions' in navigator) {
+        navigator.permissions.query({ name: 'camera' as any }).then((result) => {
+          if (result.state === 'granted') {
+            resolve(true);
+            return;
+          }
+          // If not granted, show our custom explanation first
+          setPermissionResolve(() => resolve);
+          setShowPermissionModal(true);
+        }).catch(() => {
+          // Fallback if query fails
+          setPermissionResolve(() => resolve);
+          setShowPermissionModal(true);
+        });
+      } else {
+        setPermissionResolve(() => resolve);
+        setShowPermissionModal(true);
+      }
+    });
+  };
+
+  const handlePermissionConfirm = async () => {
+    setShowPermissionModal(false);
+    try {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        stream.getTracks().forEach(track => track.stop());
+        if (permissionResolve) permissionResolve(true);
+      }
+    } catch (err) {
+      console.warn("Camera permission denied:", err);
+      showToast("تم رفض إذن الكاميرا. يرجى تفعيله من إعدادات المتصفح.", "error");
+      if (permissionResolve) permissionResolve(false);
+    }
+  };
+
+  const handlePermissionCancel = () => {
+    setShowPermissionModal(false);
+    if (permissionResolve) permissionResolve(false);
+  };
+
+  useEffect(() => {
+    const checkStandalone = () => {
+      const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+      setIsStandalone(isStandaloneMode);
+      if (isStandaloneMode) {
+        setShowInstallBtn(false);
+      }
+    };
+
+    checkStandalone();
+
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      if (!isStandalone) {
+        setShowInstallBtn(true);
+      }
+    };
+
+    const handleAppInstalled = () => {
+      setDeferredPrompt(null);
+      setShowInstallBtn(false);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, [isStandalone]);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      console.log('User accepted the install prompt');
+      setShowInstallBtn(false);
+    }
+    setDeferredPrompt(null);
+  };
+
+  const handleShareApp = async () => {
+    const shareData = {
+      title: 'حساب روح - الحاسبة الذكية',
+      text: 'ثبت تطبيق حاسبة الروح على جهازك واستمتع بحلول الذكاء الاصطناعي والمحولات الذكية.',
+      url: 'https://hasebaroohyo.vercel.app/'
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(shareData.url);
+        showToast('تم نسخ رابط التطبيق للمشاركة', 'success');
+      }
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        console.error('Share failed:', err);
+      }
+    }
+  };
+
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -770,9 +1063,19 @@ export default function App() {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
+    // Prevent context menu to feel like a native app
+    const handleContextMenu = (e: MouseEvent) => {
+      // Allow context menu only on input/textarea if needed, but for this app we'll disable it
+      if ((e.target as HTMLElement).tagName !== 'INPUT' && (e.target as HTMLElement).tagName !== 'TEXTAREA') {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('contextmenu', handleContextMenu);
+
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('contextmenu', handleContextMenu);
     };
   }, []);
 
@@ -846,9 +1149,16 @@ export default function App() {
   };
 
   const clearHistory = () => {
-    if (window.confirm('هل تريد مسح السجل؟')) {
-      setHistory([]);
-    }
+    setConfirmModal({
+      title: 'مسح السجل',
+      message: 'هل أنت متأكد من رغبتك في مسح سجل العمليات بالكامل؟ لا يمكن التراجع عن هذا الإجراء.',
+      variant: 'danger',
+      onConfirm: () => {
+        setHistory([]);
+        setConfirmModal(null);
+        showToast('تم مسح السجل بنجاح', 'success');
+      }
+    });
   };
 
   const renderTab = () => {
@@ -856,7 +1166,13 @@ export default function App() {
       case 'calc': return <CalculatorTab onAddHistory={addHistoryItem} />;
       case 'convert': return <ConverterTab onAddHistory={addHistoryItem} />;
       case 'health': return <HealthTab onAddHistory={addHistoryItem} />;
-      case 'ai': return <AISolverTab onAddHistory={addHistoryItem} />;
+      case 'ai': return (
+        <AISolverTab 
+          onAddHistory={addHistoryItem} 
+          showToast={showToast} 
+          onPermissionRequest={requestCameraPermission} 
+        />
+      );
       case 'history': return (
         <div className="flex flex-col h-full p-4 overflow-y-auto custom-scrollbar max-w-lg mx-auto w-full">
           <div className="flex justify-between items-center mb-6">
@@ -996,6 +1312,28 @@ export default function App() {
               </button>
             );
           })}
+
+          {/* Desktop PWA buttons */}
+          <div className="mt-4 flex flex-col gap-2">
+            {showInstallBtn && (
+              <button
+                id="install-btn"
+                onClick={handleInstallClick}
+                className="flex items-center gap-4 px-5 py-4 rounded-xl text-emerald-400 bg-emerald-600/10 hover:bg-emerald-600/20 transition-all font-bold"
+              >
+                <Download size={20} />
+                <span className="text-sm">تثبيت التطبيق</span>
+              </button>
+            )}
+            <button
+              id="share-app-btn"
+              onClick={handleShareApp}
+              className="flex items-center gap-4 px-5 py-4 rounded-xl text-gray-400 bg-gray-800/40 hover:bg-gray-800 transition-all font-bold"
+            >
+              <Share2 size={20} />
+              <span className="text-sm">مشاركة التطبيق</span>
+            </button>
+          </div>
         </div>
 
         <div className="pt-6 border-t border-gray-800">
@@ -1035,6 +1373,26 @@ export default function App() {
               </div>
            </a>
             <div className="flex items-center gap-2">
+               {showInstallBtn && (
+                 <button 
+                   id="install-btn"
+                   type="button"
+                   onClick={handleInstallClick} 
+                   className="p-2 rounded-lg text-emerald-400 bg-emerald-600/10"
+                   title="تثبيت"
+                 >
+                    <Download size={20} />
+                 </button>
+               )}
+               <button 
+                 id="share-app-btn"
+                 type="button"
+                 onClick={handleShareApp} 
+                 className="p-2 rounded-lg text-gray-400 bg-gray-800"
+                 title="مشاركة"
+               >
+                  <Share2 size={20} />
+               </button>
                <button 
                  type="button"
                  onClick={() => setActiveTab('history')} 
@@ -1085,6 +1443,32 @@ export default function App() {
           })}
         </nav>
       </main>
+
+      {/* Global Modals & Toasts */}
+      <AnimatePresence>
+        {toast && (
+          <Toast 
+            message={toast.message} 
+            type={toast.type} 
+            onClose={() => setToast(null)} 
+          />
+        )}
+        {showPermissionModal && (
+          <PermissionModal 
+            onConfirm={handlePermissionConfirm} 
+            onCancel={handlePermissionCancel} 
+          />
+        )}
+        {confirmModal && (
+          <ConfirmationModal
+            title={confirmModal.title}
+            message={confirmModal.message}
+            variant={confirmModal.variant}
+            onConfirm={confirmModal.onConfirm}
+            onCancel={() => setConfirmModal(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
     </div>
   );
