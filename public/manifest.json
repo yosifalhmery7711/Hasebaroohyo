@@ -13,6 +13,12 @@
   "icons": [
     {
       "src": "https://lh3.googleusercontent.com/d/1p79NP1wGo5nAmDpGLV3xHvWbC1DJfZdZ",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://lh3.googleusercontent.com/d/1p79NP1wGo5nAmDpGLV3xHvWbC1DJfZdZ",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"

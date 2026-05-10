@@ -27,7 +27,16 @@ export const getGeminiResponse = async (userPrompt: string, imageBase64?: string
       })
     });
 
-    const data = await response.json();
+    const contentType = response.headers.get("content-type");
+    let data: any;
+    
+    if (contentType && contentType.includes("application/json")) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      console.error("Non-JSON response received:", text);
+      throw new Error(`استجابة غير متوقعة من الخادم (Status: ${response.status}). يرجى المحاولة لاحقاً.`);
+    }
     
     if (!response.ok) {
       console.error("AI API Error:", data);

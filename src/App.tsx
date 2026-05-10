@@ -916,8 +916,23 @@ const AISolverTab = ({
 // --- Main App Component ---
 export default function App() {
   // UI Sync: 2026-05-08 19:59
-  const [activeTab, setActiveTab] = useState(() => localStorage.getItem('rouh_active_tab') || 'calc');
-  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [activeTab, setActiveTab] = useState(() => {
+    // Try to get from URL first for PWA shortcuts
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab');
+      if (tab && TABS.some(t => t.id === tab)) return tab;
+    }
+    return localStorage.getItem('rouh_active_tab') || 'calc';
+  });
+  const [history, setHistory] = useState<HistoryItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('hissab_rouh_history');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
   const [isLanding, setIsLanding] = useState(() => {
     return !sessionStorage.getItem('rouh_splash_shown');
   }); 
@@ -1115,15 +1130,10 @@ export default function App() {
     };
   }, [isLanding]);
 
+  // Save active tab
   useEffect(() => {
     localStorage.setItem('rouh_active_tab', activeTab);
   }, [activeTab]);
-
-  // Load history from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem('hissab_rouh_history');
-    if (saved) setHistory(JSON.parse(saved));
-  }, []);
 
   // Save history to localStorage
   useEffect(() => {
