@@ -2,9 +2,10 @@
 
 export const getGeminiResponse = async (userPrompt: string, imageBase64?: string) => {
   try {
-    const API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
+    const rawKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+    const API_KEY = rawKey?.trim();
     
-    if (!API_KEY || API_KEY.includes("xxxxxxxx")) {
+    if (!API_KEY || API_KEY.includes("xxxxxxxx") || API_KEY === "") {
       throw new Error("OpenRouter API Key is missing or invalid. Please set a valid VITE_OPENROUTER_API_KEY in the Settings menu (Environment Variables).");
     }
 
@@ -33,7 +34,7 @@ export const getGeminiResponse = async (userPrompt: string, imageBase64?: string
         "X-Title": "Hisab Rouh",
       },
       body: JSON.stringify({
-        model: "google/gemini-flash-1.5",
+        model: "google/gemini-2.0-flash-001",
         messages: messages,
       })
     });
@@ -42,7 +43,14 @@ export const getGeminiResponse = async (userPrompt: string, imageBase64?: string
     
     if (!response.ok) {
       console.error("OpenRouter Response Error:", data);
-      const errorMsg = data.error?.message || `API Error: ${response.status} ${response.statusText}`;
+      let errorMsg = data.error?.message || `API Error: ${response.status} ${response.statusText}`;
+      
+      if (errorMsg.toLowerCase().includes("user not found")) {
+        errorMsg = "خطأ من OpenRouter: 'User not found'. هذا يعني عادةً أن مفتاح API غير صالح أو أن الحساب في OpenRouter غير مربوط بشكل صحيح. يرجى التأكد من نسخ المفتاح بشكل صحيح.";
+      } else if (errorMsg.toLowerCase().includes("insufficient balance") || errorMsg.toLowerCase().includes("credit") || errorMsg.toLowerCase().includes("balance")) {
+        errorMsg = "خطأ من OpenRouter: الرصيد غير كافٍ. يرجى شحن رصيدك في OpenRouter للمتابعة.";
+      }
+      
       throw new Error(errorMsg);
     }
 
